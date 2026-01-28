@@ -30,7 +30,7 @@ This repository follows a feature-based architecture:
 ## 🛠️ Setup & Development
 1.  **Clone the repo:**
     ```bash
-    git clone https://github.com/your-username/repo-name.git
+    git clone https://github.com/MuskanLalani12/To-Do-List.git
     ```
 2.  **Install dependencies:**
     ```bash
