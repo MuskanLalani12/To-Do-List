@@ -1,48 +1,38 @@
-# To-Do App Project
+# To-Do App (Vanilla JS)
 
-A modern, web-based to-do application designed for clarity, flow, and productivity.
+A modern, web-based to-do application designed for clarity, flow, and productivity. Built with pure HTML, CSS, and JavaScript.
 
 ## 🌟 Vision
-To build a task management tool that feels like a natural extension of your thought process. We aim to balance power features (nesting, smart lists) with a minimalistic, "creator-friendly" interface.
+To build a task management tool that feels like a natural extension of your thought process. No heavy frameworks, just speed and elegance.
 
-## 🚀 Key Features (Planned)
-- **Fluid Lists:** Nesting, drag-and-drop, and smart organization.
+## 🚀 Key Features
+- **Fluid Lists:** Nesting and smart organization.
 - **Focus Mode:** "Zen" view to tackle one task at a time.
-- **Privacy First:** Local-first data storage.
-- **Rich Context:** Notes, tags, and due dates without the clutter.
+- **Privacy First:** Local-first data storage (localStorage).
+- **Premium Design:** Glassmorphism and smooth animations.
 
 ## 📂 Project Structure
-This repository follows a feature-based architecture:
-
 ```text
 /
-├── .github/          # Workflows and templates
-├── docs/             # Planning and design documents
-├── src/
-│   ├── components/   # Shared UI components
-│   ├── features/     # Core business logic (Lists, Tasks)
-│   ├── hooks/        # React hooks
-│   ├── lib/          # Utilities
-│   └── types/        # TypeScript definitions
-└── public/           # Static assets
+├── .github/          # Workflows
+├── docs/             # Planning documents
+├── index.html        # Entry point
+├── style.css         # Styles
+├── script.js         # Logic
+└── README.md         # This file
 ```
 
-## 🛠️ Setup & Development
+## 🛠️ Setup & Usage
 1.  **Clone the repo:**
     ```bash
     git clone https://github.com/MuskanLalani12/To-Do-List.git
     ```
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Start development server:**
-    ```bash
-    npm run dev
-    ```
+2.  **Run:**
+    *   Simply open `index.html` in your browser.
+    *   Or use a local server (e.g., Live Server in VS Code) for the best experience.
 
 ## 📄 Documentation
-*   [Product Plan & Roadmap](./docs/PROJECT_PLAN.md) - Detailed feature breakdown.
+*   [Product Plan & Roadmap](./docs/PROJECT_PLAN.md)
 
 ---
 *Created as part of the To-Do App Logic Project.*
