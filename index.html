@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar / Navigation -->
@@ -17,7 +19,7 @@
                 <div class="logo-icon"></div>
                 <h1>Flow</h1>
             </div>
-            
+
             <nav class="nav-menu">
                 <button class="nav-item active" data-filter="all">
                     <span class="icon">📋</span> All Tasks
@@ -56,6 +58,7 @@
             <div class="task-input-area">
                 <div class="input-wrapper">
                     <input type="text" id="new-task-input" placeholder="What needs to be done?" autocomplete="off">
+                    <input type="date" id="new-task-date" class="date-input" aria-label="Due Date">
                     <button id="btn-add-task" class="btn-primary">
                         <span>+</span>
                     </button>
@@ -80,7 +83,7 @@
                     </li> 
                     -->
                 </ul>
-                
+
                 <div id="empty-state" class="empty-state hidden">
                     <p>✨ All caught up! Enjoy your day.</p>
                 </div>
@@ -90,4 +93,5 @@
 
     <script type="module" src="script.js"></script>
 </body>
+
 </html>

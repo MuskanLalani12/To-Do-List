@@ -10,9 +10,9 @@ const THEME_KEY = 'flow_theme';
 // --- State Management ---
 let state = {
     tasks: [],
-    filter: 'all', // all, active, completed
-    lists: ['Personal', 'Work'], // MVP: Simple strings
-    activeList: 'Personal'
+    lists: ['Personal', 'Work', 'Groceries'],
+    activeList: 'Personal', // Specific list name or null (for global views)
+    filter: 'all' // 'all', 'active', 'completed'
 };
 
 // --- DOM Elements ---
@@ -22,6 +22,8 @@ const elements = {
     taskList: document.getElementById('task-list'),
     emptyState: document.getElementById('empty-state'),
     filterBtns: document.querySelectorAll('.nav-item'),
+    listContainer: document.getElementById('lists-container'),
+    addListBtn: document.getElementById('btn-add-list'),
     themeBtn: document.getElementById('btn-theme'),
     listTitle: document.getElementById('current-list-title'),
     dateDisplay: document.getElementById('date-display')
@@ -39,55 +41,150 @@ function init() {
 // --- Logic: Data & Storage ---
 
 function loadState() {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (data) {
-        const parsed = JSON.parse(data);
-        state.tasks = parsed.tasks || [];
-        state.lists = parsed.lists || ['Personal', 'Work'];
+    try {
+        const data = localStorage.getItem(STORAGE_KEY);
+        if (data) {
+            const parsed = JSON.parse(data);
+            state.tasks = parsed.tasks || [];
+            state.lists = parsed.lists || ['Personal', 'Work'];
+            state.activeList = parsed.activeList || 'Personal';
+            state.filter = parsed.filter || 'all';
+        }
+    } catch (e) {
+        console.error("Failed to load state", e);
     }
 }
 
 function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        tasks: state.tasks,
-        lists: state.lists
-    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     render();
 }
 
+// --- Logic: Tasks ---
+
 function addTask(text) {
     if (!text.trim()) return;
-    
+
+    // If in a global view (activeList === null), default to first list or 'Inbox'
+    const targetList = state.activeList || state.lists[0] || 'Inbox';
+
     const newTask = {
         id: Date.now(),
         text: text.trim(),
         completed: false,
-        list: state.activeList,
-        createdAt: new Date().toISOString()
+        list: targetList,
+        createdAt: new Date().toISOString(),
+        subtasks: [] // Initialize subtasks array
     };
 
-    state.tasks.unshift(newTask); // Add to top
+    state.tasks.unshift(newTask);
     saveState();
     elements.input.value = '';
 }
 
+function addSubtask(parentId, text) {
+    if (!text || !text.trim()) return;
+
+    const parent = findTaskById(state.tasks, parentId);
+    if (parent) {
+        if (!parent.subtasks) parent.subtasks = [];
+
+        parent.subtasks.push({
+            id: Date.now(),
+            text: text.trim(),
+            completed: false
+        });
+        saveState();
+    }
+}
+
 function toggleTask(id) {
-    // Determine the index of the task with the given ID
-    const taskIndex = state.tasks.findIndex(t => t.id === id);
-    if (taskIndex > -1) {
-        state.tasks[taskIndex].completed = !state.tasks[taskIndex].completed;
+    const task = findTaskById(state.tasks, id);
+    if (task) {
+        task.completed = !task.completed;
         saveState();
     }
 }
 
 function deleteTask(id) {
+    // Try to delete from main list first
+    const initialLength = state.tasks.length;
     state.tasks = state.tasks.filter(t => t.id !== id);
+
+    // If nothing changed, it might be a subtask
+    if (state.tasks.length === initialLength) {
+        deleteSubtaskRecursive(state.tasks, id);
+    }
+
     saveState();
 }
 
-function setFilter(filterType) {
+// Recursive helper to remove subtask from any nested level
+function deleteSubtaskRecursive(tasks, id) {
+    for (let task of tasks) {
+        if (task.subtasks) {
+            const initialLen = task.subtasks.length;
+            task.subtasks = task.subtasks.filter(t => t.id !== id);
+            if (task.subtasks.length < initialLen) return; // Found and deleted
+
+            deleteSubtaskRecursive(task.subtasks, id);
+        }
+    }
+}
+
+// Recursive helper to find any task
+function findTaskById(tasks, id) {
+    for (let task of tasks) {
+        if (task.id === id) return task;
+        if (task.subtasks) {
+            const found = findTaskById(task.subtasks, id);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+
+// --- Logic: Lists ---
+
+function createList() {
+    const name = prompt("Enter new list name:");
+    if (name && name.trim()) {
+        const cleanName = name.trim();
+        if (!state.lists.includes(cleanName)) {
+            state.lists.push(cleanName);
+            state.activeList = cleanName; // Switch to new list
+            state.filter = 'all';
+            saveState();
+        } else {
+            alert("List already exists!");
+        }
+    }
+}
+
+function deleteList(listName, e) {
+    e.stopPropagation();
+    if (confirm(`Delete list "${listName}" and all its tasks?`)) {
+        state.lists = state.lists.filter(l => l !== listName);
+        state.tasks = state.tasks.filter(t => t.list !== listName);
+
+        if (state.activeList === listName) {
+            state.activeList = null;
+            state.filter = 'all';
+        }
+        saveState();
+    }
+}
+
+function switchList(listName) {
+    state.activeList = listName;
+    state.filter = 'all';
+    saveState();
+}
+
+function setGlobalFilter(filterType) {
+    state.activeList = null;
     state.filter = filterType;
-    render();
+    saveState();
 }
 
 // --- Logic: UI ---
@@ -97,13 +194,15 @@ function loadTheme() {
     if (savedTheme) {
         document.documentElement.setAttribute('data-theme', savedTheme);
         updateThemeIcon(savedTheme);
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        updateThemeIcon('dark');
     }
 }
 
 function toggleTheme() {
     const current = document.documentElement.getAttribute('data-theme');
     const newTheme = current === 'dark' ? 'light' : 'dark';
-    
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem(THEME_KEY, newTheme);
     updateThemeIcon(newTheme);
@@ -121,47 +220,64 @@ function updateDate() {
 // --- Event Listeners ---
 
 function setupEventListeners() {
-    // Add Task
+    // Add Main Task
     elements.addBtn.addEventListener('click', () => addTask(elements.input.value));
-    
     elements.input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') addTask(elements.input.value);
     });
 
-    // Filters
+    // Top Navigation
     elements.filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            elements.filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            setFilter(btn.dataset.filter);
+            setGlobalFilter(btn.dataset.filter);
         });
+    });
+
+    // Lists
+    elements.addListBtn.addEventListener('click', createList);
+    elements.listContainer.addEventListener('click', (e) => {
+        const target = e.target;
+        const listItem = target.closest('.list-item');
+        if (!listItem) return;
+
+        if (target.classList.contains('btn-delete-list')) {
+            const name = listItem.dataset.name;
+            deleteList(name, e);
+        } else {
+            const name = listItem.dataset.name;
+            switchList(name);
+        }
     });
 
     // Theme
     elements.themeBtn.addEventListener('click', toggleTheme);
 
-    // List Delegation (Delete & Toggle)
+    // Task List Delegation (Delete, Toggle, Add Subtask)
     elements.taskList.addEventListener('click', (e) => {
         const target = e.target;
-        const li = target.closest('.task-item');
-        if (!li) return;
-        
-        const id = parseInt(li.dataset.id);
 
-        // Delete Button
+        // Handle Add Subtask Button
+        if (target.classList.contains('btn-add-subtask') || target.closest('.btn-add-subtask')) {
+            const li = target.closest('.task-item');
+            const id = parseInt(li.dataset.id);
+            const text = prompt("Enter subtask:");
+            if (text) addSubtask(id, text);
+            return;
+        }
+
+        // Handle Delete Button
         if (target.classList.contains('btn-delete') || target.closest('.btn-delete')) {
+            const li = target.closest('.task-item'); // Could be main or sub
+            const id = parseInt(li.dataset.id);
             deleteTask(id);
             return;
         }
 
-        // Checkbox / Toggle
-        if (target.closest('.custom-checkbox') || target.classList.contains('task-text')) {
-             // In CSS, clicking label triggers input change, but we manage state manually?
-             // Actually, let's catch the click on the container to prevent double toggle
-        }
+        // Handle Toggle (Checkbox/Text) inside change event for reliability
+        // but if clicked on text, toggle it too? User preference. 
+        // Let's keep it strictly to checkbox for now to avoid accidental toggles while selecting text.
     });
 
-    // Handle Input Change for Checkbox specifically to be robust
     elements.taskList.addEventListener('change', (e) => {
         if (e.target.type === 'checkbox') {
             const li = e.target.closest('.task-item');
@@ -173,49 +289,123 @@ function setupEventListeners() {
 // --- Rendering ---
 
 function render() {
-    elements.listTitle.textContent = state.filter === 'all' ? 'All Tasks' : 
-                                     state.filter === 'active' ? 'Active Tasks' : 'Completed';
+    renderNavigation();
+    renderTasks();
+}
 
-    let filteredTasks = state.tasks;
-    
+function renderNavigation() {
+    elements.filterBtns.forEach(btn => {
+        const filter = btn.dataset.filter;
+        if (state.activeList === null && state.filter === filter) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    elements.listContainer.innerHTML = '';
+    state.lists.forEach(list => {
+        const li = document.createElement('li');
+        li.className = `list-item ${state.activeList === list ? 'active' : ''}`;
+        li.dataset.name = list;
+        li.innerHTML = `
+            <span>${escapeHtml(list)}</span>
+            <span class="btn-delete-list" title="Delete List">×</span>
+        `;
+        elements.listContainer.appendChild(li);
+    });
+}
+
+function renderTasks() {
+    // Header Logic
+    if (state.activeList) {
+        elements.listTitle.textContent = state.activeList;
+        elements.input.placeholder = `Add task to ${state.activeList}...`;
+    } else {
+        if (state.filter === 'all') elements.listTitle.textContent = "All Tasks";
+        else if (state.filter === 'active') elements.listTitle.textContent = "Active Tasks";
+        else if (state.filter === 'completed') elements.listTitle.textContent = "Completed Tasks";
+        elements.input.placeholder = "Add a task...";
+    }
+
+    // Filter Logic
+    let filtered = state.tasks;
+    if (state.activeList) {
+        filtered = filtered.filter(t => t.list === state.activeList);
+    }
+
+    // Global filter application
     if (state.filter === 'active') {
-        filteredTasks = state.tasks.filter(t => !t.completed);
+        filtered = filtered.filter(t => !t.completed);
     } else if (state.filter === 'completed') {
-        filteredTasks = state.tasks.filter(t => t.completed);
+        filtered = filtered.filter(t => t.completed);
     }
 
     elements.taskList.innerHTML = '';
 
-    if (filteredTasks.length === 0) {
+    if (filtered.length === 0) {
         elements.emptyState.classList.remove('hidden');
+        if (state.activeList && state.tasks.filter(t => t.list === state.activeList).length === 0) {
+            elements.emptyState.querySelector('p').textContent = `No tasks in ${state.activeList}. Add one above!`;
+        } else {
+            elements.emptyState.querySelector('p').textContent = "✨ All caught up! Enjoy your day.";
+        }
     } else {
         elements.emptyState.classList.add('hidden');
-        
-        filteredTasks.forEach(task => {
-            const li = document.createElement('li');
-            li.className = `task-item ${task.completed ? 'completed' : ''}`;
-            li.dataset.id = task.id;
-            
-            li.innerHTML = `
-                <label class="custom-checkbox">
-                    <input type="checkbox" ${task.completed ? 'checked' : ''}>
-                    <span class="checkmark"></span>
-                </label>
-                <div class="task-content">
-                    <span class="task-text">${escapeHtml(task.text)}</span>
-                </div>
-                <button class="btn-delete" aria-label="Delete task">×</button>
-            `;
-            
-            elements.taskList.appendChild(li);
+        filtered.forEach(task => {
+            elements.taskList.appendChild(createTaskElement(task));
         });
     }
 }
 
-// Utility to prevent XSS
+// Recursive Task Rendering
+function createTaskElement(task, isSubtask = false) {
+    const li = document.createElement('li');
+    li.className = `task-item ${task.completed ? 'completed' : ''} ${isSubtask ? 'subtask-item' : ''}`;
+    li.dataset.id = task.id;
+
+    const listBadge = (!isSubtask && !state.activeList) ? `<span class="task-tag">${escapeHtml(task.list)}</span>` : '';
+
+    // Add Subtask Button (only for parent tasks for now to prevent infinite nesting UI chaos in MVP)
+    const addSubBtn = !isSubtask ?
+        `<button class="btn-add-subtask" title="Add Subtask">
+            <span class="icon-plus">+</span>
+         </button>` : '';
+
+    li.innerHTML = `
+        <div class="task-main-row">
+            <label class="custom-checkbox">
+                <input type="checkbox" ${task.completed ? 'checked' : ''}>
+                <span class="checkmark"></span>
+            </label>
+            <div class="task-content">
+                <span class="task-text">${escapeHtml(task.text)}</span>
+                ${listBadge}
+            </div>
+            <div class="task-actions">
+                ${addSubBtn}
+                <button class="btn-delete" aria-label="Delete task">×</button>
+            </div>
+        </div>
+    `;
+
+    // Render Subtasks Container
+    if (!isSubtask && task.subtasks && task.subtasks.length > 0) {
+        const subList = document.createElement('ul');
+        subList.className = 'subtask-list';
+
+        task.subtasks.forEach(sub => {
+            subList.appendChild(createTaskElement(sub, true));
+        });
+        li.appendChild(subList);
+    }
+
+    return li;
+}
+
 function escapeHtml(text) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = text || '';
     return div.innerHTML;
 }
 
