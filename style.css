@@ -673,3 +673,31 @@ body {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 4px;
 }
+
+/* Sparkle Cursor Animation */
+.sparkle {
+    position: fixed;
+    pointer-events: none;
+    background: var(--accent-color);
+    border-radius: 50%;
+    animation: sparkle-anim 0.8s linear forwards;
+    z-index: 9999;
+    /* Optional: subtle glow */
+    box-shadow: 0 0 4px var(--accent-color);
+}
+
+@keyframes sparkle-anim {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Hide cursor on touch devices to prevent trailing artifacts if needed, 
+   but generally sparkles are fun on touch too if implemented right. 
+   We'll keep it simple for now. */

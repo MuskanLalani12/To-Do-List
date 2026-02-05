@@ -41,6 +41,7 @@ function init() {
     checkReminders();
     // Check reminders every hour
     setInterval(checkReminders, 60 * 60 * 1000);
+    initCursor();
 }
 
 // --- Logic: Data & Storage ---
@@ -533,6 +534,49 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text || '';
     return div.innerHTML;
+}
+
+// --- Logic: Cursor Animation (Sparkle Trail) ---
+function initCursor() {
+    let lastTime = 0;
+    const interval = 20; // Throttle to generate sparkles every 20ms
+
+    window.addEventListener('mousemove', function (e) {
+        const now = Date.now();
+        if (now - lastTime < interval) return;
+        lastTime = now;
+
+        createSparkle(e.clientX, e.clientY);
+    });
+}
+
+function createSparkle(x, y) {
+    const sparkle = document.createElement('div');
+    sparkle.classList.add('sparkle');
+
+    // Position
+    sparkle.style.left = `${x}px`;
+    sparkle.style.top = `${y}px`;
+
+    // Randomize movement via custom props for the CSS animation
+    // Move between -30px and 30px on both axes
+    const tx = (Math.random() - 0.5) * 60;
+    const ty = (Math.random() - 0.5) * 60 + 20; // Slight gravity (downward bias)
+
+    sparkle.style.setProperty('--tx', `${tx}px`);
+    sparkle.style.setProperty('--ty', `${ty}px`);
+
+    // Randomize Size
+    const size = Math.random() * 6 + 2; // 2px to 8px
+    sparkle.style.width = `${size}px`;
+    sparkle.style.height = `${size}px`;
+
+    document.body.appendChild(sparkle);
+
+    // Cleanup after animation (0.8s = 800ms)
+    setTimeout(() => {
+        sparkle.remove();
+    }, 800);
 }
 
 // Start
