@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flow State | To-Do</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon"></div>
+                <h1>List</h1>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-filter="all">
+                    <span class="icon">📋</span> All Tasks
+                </button>
+                <button class="nav-item" data-filter="active">
+                    <span class="icon">⚡</span> Active
+                </button>
+                <button class="nav-item" data-filter="completed">
+                    <span class="icon">✅</span> Completed
+                </button>
+            </nav>
+
+            <div class="lists-section">
+                <h2>My Lists</h2>
+                <ul id="lists-container" class="lists-nav">
+                    <!-- Dynamic Lists will appear here -->
+                    <li class="list-item active">Personal</li>
+                    <li class="list-item">Work</li>
+                </ul>
+                <button id="btn-add-list" class="btn-text">+ New List</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="header-titles">
+                    <h2 id="current-list-title">All Tasks</h2>
+                    <p id="date-display">Today's Focus</p>
+                </div>
+                <div class="theme-toggle">
+                    <button id="btn-theme" aria-label="Toggle Theme">🌙</button>
+                </div>
+            </header>
+
+            <div class="task-input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="new-task-input" placeholder="What needs to be done?" autocomplete="off">
+                    <input type="date" id="new-task-date" class="date-input" aria-label="Due Date">
+                    <button id="btn-add-task" class="btn-primary">
+                        <span>+</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tasks-container">
+                <ul id="task-list" class="task-list">
+                    <!-- Tasks will be injected here via JS -->
+                    <!-- Example Task Structure -->
+                    <!-- 
+                    <li class="task-item">
+                        <label class="custom-checkbox">
+                            <input type="checkbox">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="task-content">
+                            <span class="task-text">Design the new homepage</span>
+                            <span class="task-tag">#Work</span>
+                        </div>
+                        <button class="btn-delete">×</button>
+                    </li> 
+                    -->
+                </ul>
+
+                <div id="empty-state" class="empty-state hidden">
+                    <p>✨ All caught up! Enjoy your day.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
